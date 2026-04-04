@@ -25,4 +25,6 @@ urlpatterns = [
     path('seguridad_usuarios/', include('seguridad_usuarios.urls')),  # Incluir las URLs de la app seguridad_usuario
     path('inventario/', include('inventario.urls')),  # Incluir las URLs de la app inventario
     path('configuraciones_maestras/', include('configuraciones_maestras.urls')),  # Incluir las URLs de la app configuraciones_maestras
+    path('clientes_pedidos/', include('clientes_pedidos.urls')),  # Incluir las URLs de la app clientes_pedidos
+    path('reposicion_stock/', include('reposicion_stock.urls')),  # Incluir las URLs de la app reposicion_stock
 ]

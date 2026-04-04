@@ -1,50 +1,111 @@
 {% extends 'base.html' %}
 
+{% load static %}
+
 {% block content %}
-  <div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
-    <div style="width: 100%; max-width: 900px;">
-      <h2 class="text-center mb-4">Empleados</h2>
-      <div class="mb-3 text-center">
-        <a href="{% url 'agregar_empleado' %}" class="btn btn-primary">Agregar Empleado</a>
-      </div>
-      <div class="filters mb-4">
-        <form method="get" class="d-flex flex-wrap justify-content-center gap-2">
-          <input type="text" name="nombre" placeholder="Nombre" value="{{ nombre }}" class="form-control" style="max-width: 150px;">
-          <input type="text" name="apellido" placeholder="Apellido" value="{{ apellido }}" class="form-control" style="max-width: 150px;">
-          <input type="text" name="departamento" placeholder="Departamento" value="{{ departamento }}" class="form-control" style="max-width: 150px;">
-          <input type="text" name="email" placeholder="Email" value="{{ email }}" class="form-control" style="max-width: 150px;">
-          <button type="submit" class="btn btn-success">Buscar</button>
-          <a href="{% url 'lista_empleados' %}" class="btn btn-secondary">Limpiar</a>
-        </form>
-      </div>
-      <div class="table-responsive">
-        <table class="table table-bordered table-striped align-middle text-center">
-          <thead class="table-dark">
-            <tr>
-              <th>ID</th>
-              <th>Nombre</th>
-              <th>Apellido</th>
-              <th>Correo Electrónico</th>
-              <th>Cargo</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for empleado in empleados %}
-              <tr>
-                <td>{{ empleado.id }}</td>
-                <td>{{ empleado.nombre }}</td>
-                <td>{{ empleado.apellidos }}</td>
-                <td>{{ empleado.email }}</td>
-                <td>{{ empleado.cargo }}</td>
-                <td>
-                  <a href="{% url 'detalle_empleado' empleado.id %}" class="btn btn-warning btn-sm">Detalles</a>
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+<div class="container-fluid py-5" style="min-height: 100vh;">
+  <div class="row justify-content-center">
+    <div class="col-12">
+      <div class="card shadow-lg border-0">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+            <h2 class="fw-bold mb-0" style="color: #292929;">Gestión de Empleados</h2>
+            <a href="{% url 'agregar_empleado' %}" 
+              class="btn btn-lg d-flex align-items-center"
+              style="gap: 8px; background-color: #1f58d3; border-color: #2159d3; color: #fff;">
+                <img src="{% static 'img/agregar.png' %}" alt="Agregar" width="28" height="28">
+                <span class="d-none d-md-inline">Empleado</span>
+            </a>
+          </div>
+          <form method="get" class="row g-3 mb-4 justify-content-center align-items-end bg-light p-3 rounded shadow-sm">
+            <div class="col-md-3">
+              <input type="text" name="nombre" placeholder="Nombre" value="{{ request.GET.nombre }}" class="form-control">
+            </div>
+            <div class="col-md-3">
+              <input type="text" name="apellido" placeholder="Apellido" value="{{ request.GET.apellido }}" class="form-control">
+            </div>
+            <div class="col-md-2">
+              <input type="text" name="departamento" placeholder="Departamento" value="{{ request.GET.departamento }}" class="form-control">
+            </div>
+            <div class="col-md-2">
+              <input type="text" name="email" placeholder="Email" value="{{ request.GET.email }}" class="form-control">
+            </div>
+            <div class="col-md-2">
+              <select name="estado" class="form-select">
+                <option value="">Estado</option>
+                <option value="ACTIVO" {% if request.GET.estado == 'ACTIVO' %}selected{% endif %}>Activos</option>
+                <option value="INACTIVO" {% if request.GET.estado == 'INACTIVO' %}selected{% endif %}>Inactivos</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <select name="usuario" class="form-select">
+                <option value="">Usuario</option>
+                <option value="SI" {% if request.GET.usuario == 'SI' %}selected{% endif %}>Con Usuario</option>
+                <option value="NO" {% if request.GET.usuario == 'NO' %}selected{% endif %}>Sin Usuario</option>
+              </select>
+            </div>
+            <div class="col-md-2 d-grid">
+              <button type="submit" class="btn btn-success"><i class="bi bi-search"></i> Buscar</button>
+            </div>
+            <div class="col-md-2 d-grid">
+              <a href="{% url 'lista_empleados' %}" class="btn btn-secondary"><i class="bi bi-x-circle"></i> Limpiar</a>
+            </div>
+          </form>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle text-center">
+              <thead class="table-dark">
+                <tr>
+                  <th>ID</th>
+                  <th>Nombre</th>
+                  <th>Apellido</th>
+                  <th>Correo Electrónico</th>
+                  <th>Departamento</th>
+                  <th>Cargo</th>
+                  <th colspan="3">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for empleado in empleados %}
+                  <tr>
+                    <td>{{ empleado.id }}</td>
+                    <td>{{ empleado.nombre }}</td>
+                    <td>{{ empleado.apellidos }}</td>
+                    <td>{{ empleado.email }}</td>
+                    <td>{{ empleado.departamento }}</td>
+                    <td>{{ empleado.cargo }}</td>
+                    <td>
+                      <a href="{% url 'detalle_empleado' empleado.id %}" class="btn btn-warning btn-sm" title="Detalles">
+                        <i class="bi bi-eye-fill">Detalles</i>
+                      </a>
+                    </td>
+                    <td>
+                      <a href="{% url 'editar_empleado' empleado.id %}" class="btn btn-info btn-sm" title="Editar">
+                        <i class="bi bi-pencil-square">Editar</i>
+                      </a>
+                    </td>
+                    <td>
+                      {% if empleado.estado %}
+                        <a href="{% url 'desactivar_empleado' empleado.id %}" class="btn btn-danger btn-sm" title="Desactivar">
+                          <i class="bi bi-person-dash-fill">Inactivar</i>
+                        </a>
+                      {% else %}
+                        <a href="{% url 'activar_empleado' empleado.id %}" class="btn btn-success btn-sm" title="Activar">
+                          <i class="bi bi-person-check-fill">Activar</i>
+                        </a>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="8" class="text-center text-muted">No se encontraron empleados.</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+</div>
 {% endblock %}

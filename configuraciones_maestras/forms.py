@@ -1,7 +1,7 @@
 # configuraciones_maestras/forms.py
 
 from django import forms
-from .models import Proveedor, AgenteTransporte, DespachanteAduana, TasaCambio
+from .models import Proveedor, AgenteTransporte, DespachanteAduana, TasaCambio, Departamento, Cargo
 
 class ProveedorForm(forms.ModelForm):
     class Meta:
@@ -47,3 +47,15 @@ class TasaCambioForm(forms.ModelForm):
         model = TasaCambio
         fields = ['moneda_origen', 'moneda_destino', 'valor']
 
+class DepartamentoForm(forms.ModelForm):
+    class Meta:
+        model = Departamento
+        fields = ['nombre', 'descripcion']
+
+class CargoForm(forms.ModelForm):
+    class Meta:
+        model = Cargo
+        fields = ['nombre', 'departamento', 'descripcion']  
+        widgets = {
+            'departamento': forms.Select(attrs={'class': 'form-control'}),
+        } 

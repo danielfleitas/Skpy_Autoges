@@ -11,9 +11,9 @@
     <p><strong>Nombre:</strong> {{ empleado.nombre }}</p>
     <p><strong>Apellido:</strong> {{ empleado.apellidos }}</p>
     <p><strong>Documento de Identidad:</strong> {{ empleado.documento_identidad }}</p>
-    <p><strong>Cargo:</strong> {{ empleado.cargo }}</p>
     <p><strong>Departamento:</strong> {{ empleado.departamento }}</p>
-    <p><strong>Descripción del Trabajo:</strong> {{ empleado.descripcion_trabajo }}</p>
+    <p><strong>Cargo:</strong> {{ empleado.cargo }}</p>
+    <p><strong>Descripción del Trabajo:</strong> {{ empleado.cargo.descripcion }}</p>
     <p><strong>Email:</strong> {{ empleado.email }}</p>
     <p><strong>Teléfono:</strong> {{ empleado.telefono }}</p>
     <p><strong>Tiene Usuario:</strong> {{ empleado.tiene_usuario|yesno:"Sí,No" }}</p>

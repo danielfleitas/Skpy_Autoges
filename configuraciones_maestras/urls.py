@@ -29,8 +29,8 @@ urlpatterns = [
     #path('', home_maestras, name='home_maestras'),
     path('proveedores/', lista_proveedores, name='lista_proveedores'),
     
-    #path('despachantes-aduana/', lista_despachantes_aduana, name='lista_despachantes_aduana'),
-    #path('tasas-cambio/', lista_tasas_cambio, name='lista_tasas_cambio'),
+    path('despachantes-aduana/', lista_despachantes_aduana, name='lista_despachantes_aduana'),
+    path('tasas-cambio/', lista_tasas_cambio, name='lista_tasas_cambio'),
     path('proveedores/agregar/', agregar_proveedor, name='agregar_proveedor'),
     path('proveedores/editar/<int:pk>/', editar_proveedor, name='editar_proveedor'),
     path('proveedores/inactivar/<int:pk>/', inactivar_proveedor, name='inactivar_proveedor'),
@@ -50,4 +50,22 @@ urlpatterns = [
     #path('tasas-cambio/editar/<int:pk>/', editar_tasa_cambio, name='editar_tasa_cambio'),
     #path('tasas-cambio/eliminar/<int:pk>/', eliminar_tasa_cambio, name='eliminar_tasa_cambio'),
     #path('tasas-cambio/detalle/<int:pk>/', detalle_tasa_cambio, name='detalle_tasa_cambio'),
+
+    # Rutas para Departamentos
+    #path('departamentos/', lista_departamentos, name='lista_departamentos'),
+    #path('departamentos/agregar/', agregar_departamento, name='agregar_departamento'),
+    #path('departamentos/editar/<int:pk>/', editar_departamento, name='editar_departamento'),
+    #path('departamentos/eliminar/<int:pk>/', eliminar_departamento, name='eliminar_departamento'),
+    #path('departamentos/detalle/<int:pk>/', detalle_departamento, name='detalle_departamento'),
+    #path('departamentos/inactivar/<int:pk>/', inactivar_departamento, name='inactivar_departamento'),
+    #path('departamentos/activar/<int:pk>/', activar_departamento, name='activar_departamento'),    
+    # Rutas para Cargos
+    #path('cargos/', lista_cargos, name='lista_cargos'),
+    #path('cargos/agregar/', agregar_cargo, name='agregar_cargo'),
+    #path('cargos/editar/<int:pk>/', editar_cargo, name='editar_cargo'),
+    #path('cargos/eliminar/<int:pk>/', eliminar_cargo, name='eliminar_cargo'),
+    #path('cargos/detalle/<int:pk>/', detalle_cargo, name='detalle_cargo'), 
+    #path('cargos/inactivar/<int:pk>/', inactivar_cargo, name='inactivar_cargo'),
+    #path('cargos/activar/<int:pk>/', activar_cargo, name='activar_cargo'),
+    
 ]

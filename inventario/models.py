@@ -43,6 +43,7 @@ class Producto(models.Model):
     precio_venta = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, verbose_name="Precio de Venta Sugerido") 
     ubicacion = models.CharField(max_length=100, blank=True, null=True, verbose_name="Ubicación en el Depósito")
     fecha_compra = models.DateField(blank=True, null=True, verbose_name="Fecha de Compra")
+    imagen = models.ImageField(upload_to='productos/', blank=True, null=True, verbose_name="Imagen del Producto")
 
     def get_tipo_display(self):
         return dict(self.TIPO_PRODUCTO).get(self.tipo, 'Desconocido')
@@ -69,6 +70,13 @@ class Vehiculo(Producto):
         ('mantenimiento', 'En Mantenimiento'),
         ('reservado', 'Reservado'),
     )
+    TIPO_COMBUSTIBLE = (
+        ('gasolina', 'Gasolina'),
+        ('diesel', 'Diésel'),
+        ('electrico', 'Eléctrico'),
+        ('hibrido', 'Híbrido'),
+        ('otro', 'Otro'),
+    )
 
     nombre = models.CharField(max_length=150, verbose_name="Nombre del Vehículo")
     marca = models.CharField(max_length=100, verbose_name="Marca")
@@ -80,7 +88,13 @@ class Vehiculo(Producto):
     costo_compra = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Costo de Compra (Guaraníes)")
     precio_venta = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, verbose_name="Precio de Venta Sugerido")
     fecha_ingreso = models.DateTimeField(auto_now_add=True, null=True, blank=True, verbose_name="Fecha de Ingreso al Inventario")
-
+    motorizacion = models.CharField(max_length=100, blank=True, null=True, verbose_name="Motorización")
+    color = models.CharField(max_length=50, blank=True, null=True, verbose_name="Color")
+    combustible = models.CharField(max_length=50, blank=True, null=True, choices=TIPO_COMBUSTIBLE, verbose_name="Tipo de Combustible", default='gasolina')
+    transmision = models.CharField(max_length=50, blank=True, null=True, verbose_name="Tipo de Transmisión")
+    precio_cif_usd = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, verbose_name="Precio CIF (USD)")
+    precio_cif_guarani = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, verbose_name="Precio CIF (Guaraníes)")
+    
     def formar_nombre_completo(self):
         self.nombre = f"{self.marca} {self.modelo} ({self.año})"
 
@@ -113,6 +127,9 @@ class Repuesto(Producto):
     precio_venta = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Precio de Venta Sugerido")
     fecha_ultima_entrada = models.DateTimeField(auto_now=True, verbose_name="Fecha de Última Entrada")
     descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción Adicional")
+    categoria = models.CharField(max_length=100, blank=True, null=True, verbose_name="Categoría del Repuesto")
+    compatibilidad = models.CharField(max_length=200, blank=True, null=True, verbose_name="Compatibilidad (Modelos/Marcas)")
+    costo_unitario = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Costo Unitario (Guaraníes)", default=0)
 
     class Meta:
         verbose_name = "Repuesto"
@@ -201,3 +218,26 @@ class Deposito(models.Model):
 
     def __str__(self):
         return self.nombre
+
+# Centro de Ventas
+class CentroVentas(models.Model):
+    """
+    Modelo que representa un centro de ventas asociado a un depósito.
+    """
+    deposito = models.ForeignKey(Deposito, on_delete=models.CASCADE, related_name='centros_ventas', verbose_name="Depósito Asociado")
+    nombre = models.CharField(max_length=100, unique=True, verbose_name="Nombre del Centro de Ventas")
+    direccion = models.CharField(max_length=255, verbose_name="Dirección del Centro de Ventas")
+    telefono = models.CharField(max_length=20, blank=True, null=True, verbose_name="Teléfono de Contacto")
+    email = models.EmailField(blank=True, null=True, verbose_name="Correo Electrónico de Contacto")
+    gerente = models.CharField(max_length=100, blank=True, null=True, verbose_name="Nombre del Gerente")
+    fecha_creacion = models.DateTimeField(auto_now_add=True, null=True, blank=True, verbose_name="Fecha de Creación")
+
+    class Meta:
+        verbose_name = "Centro de Ventas"
+        verbose_name_plural = "Centros de Ventas"
+        ordering = ['nombre']
+
+    def __str__(self):
+        return f"{self.nombre} - {self.deposito.nombre}"
+    
+# Modelo para registrar la transferencia de productos entre depósitos

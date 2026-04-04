@@ -1,21 +1,27 @@
 from django.forms import inlineformset_factory
 # clientes_pedidos/forms.py
 from django import forms
-from .models import Cliente, Pedido, ItemPedido, Cotizacion
+from .models import Cliente, Pedido, ItemPedido, Cotizacion, Carrito
 
 
 # Formulario para crear un Pedido
 class PedidoCreateForm(forms.ModelForm):
 	class Meta:
 		model = Pedido
-		fields = ['cliente', 'vendedor', 'estado', 'tipo', 'observaciones', 'monto_total', 'iva']
+		fields = ['cliente', 'observaciones', 'monto_total', 'iva']
+		
 
 # Formulario para los ítems del pedido
 class ItemPedidoForm(forms.ModelForm):
-	class Meta:
-		model = ItemPedido
-		fields = ['vehiculo', 'repuesto', 'cantidad', 'precio_unitario']
+    tipo_item = forms.ChoiceField(
+        choices=[('vehiculo', 'Vehículo'), ('repuesto', 'Repuesto')],
+        required=True,
+        label='Tipo de Ítem'
+    )
 
+    class Meta:
+        model = ItemPedido
+        fields = ['tipo_item', 'vehiculo', 'repuesto', 'cantidad', 'precio_unitario']
 # Formset para asociar varios ítems a un pedido
 ItemPedidoFormSet = inlineformset_factory(
 	Pedido,
@@ -49,7 +55,8 @@ class ClienteForm(forms.ModelForm):
         nombre = cleaned_data.get('nombre')
         razon_social = cleaned_data.get('razon_social')
         documento_identidad = cleaned_data.get('documento_identidad')
-
+        ruc = cleaned_data.get('ruc')
+		
         if tipo_persona == 'FISICA':
             if not nombre:
                 self.add_error('nombre', 'El nombre es obligatorio para persona física.')
@@ -59,6 +66,8 @@ class ClienteForm(forms.ModelForm):
         elif tipo_persona == 'JURIDICA':
             if not razon_social:
                 self.add_error('razon_social', 'La razón social es obligatoria para persona jurídica.')
+            if not ruc:
+                self.add_error('ruc', 'El RUC es obligatorio para persona jurídica.')
             cleaned_data['nombre'] = None
             cleaned_data['documento_identidad'] = None
         return cleaned_data
@@ -79,3 +88,20 @@ class CotizacionForm(forms.ModelForm):
 	class Meta:
 		model = Cotizacion
 		fields = ['pedido', 'estado', 'descripcion_solicitud', 'monto_estimado', 'fecha_validez']
+
+
+class CarritoForm(forms.ModelForm):
+    class Meta:
+        model = Carrito
+        fields = ['cliente', 'vehiculos', 'repuestos']
+        widgets = {
+            'cliente': forms.HiddenInput(),
+        }
+
+class CarritoVendedorForm(forms.ModelForm):
+    class Meta:
+        model = Carrito
+        fields = ['cliente', 'vehiculos', 'repuestos']
+        widgets = {
+            'cliente': forms.HiddenInput(),
+        }

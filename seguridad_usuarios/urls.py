@@ -15,6 +15,10 @@ urlpatterns = [
     # path('usuarios/crear/', views.crear_usuario, name='crear_usuario'),
     # path('usuarios/<int:pk>/editar/', views.editar_usuario, name='editar_usuario'),
     # path('usuarios/<int:pk>/eliminar/', views.eliminar_usuario, name='eliminar_usuario'),
+    # activar usuario
+    path('usuarios/<int:pk>/activar/', views.activar_usuario, name='activar_usuario'),
+    # desactivar usuario
+    path('usuarios/<int:pk>/desactivar/', views.desactivar_usuario, name='desactivar_usuario'),
 
     # Permisos
     path('permisos/', views.lista_permisos, name='lista_permisos'),
@@ -38,6 +42,8 @@ urlpatterns = [
     path('empleados/crear/', views.agregar_empleado, name='agregar_empleado'),
     path('empleados/<int:pk>/editar/', views.editar_empleado, name='editar_empleado'),
     path('empleados/<int:pk>/', views.detalle_empleado, name='detalle_empleado'),
+    path('empleados/<int:pk>/activar/', views.activar_empleado, name='activar_empleado'),
+    path('empleados/<int:pk>/desactivar/', views.desactivar_empleado, name='desactivar_empleado'),
     # path('empleados/<int:pk>/eliminar/', views.eliminar_empleado, name='eliminar_empleado'),
 
     # Perfil
@@ -51,4 +57,6 @@ urlpatterns = [
     path('perfil/<int:pk>/', views.ver_perfil, name='perfil'),
     # crear_usuario_para_empleado 
     path('empleados/<int:empleado_id>/crear_usuario/', views.crear_usuario_para_empleado, name='crear_usuario_para_empleado'),
+
+    path('ajax/obtener_cargos/', views.obtener_cargos, name='obtener_cargos'),
 ]

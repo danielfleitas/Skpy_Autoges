@@ -8,6 +8,7 @@ from django.core.mail import send_mail
 email = 'christianfleitas97@gmail.com' # Correo electrónico del remitente
 Contrasena_temporal = "12345678"
 
+
 class Auditoria(models.Model):
     """
     Modelo que representa una auditoría en el sistema.
@@ -78,7 +79,7 @@ class Permiso(models.Model):
     class Meta:
         verbose_name = "Permiso"
         verbose_name_plural = "Permisos"
-        ordering = ['nombre']
+        ordering = ['codename']
 
 
 class Persona(models.Model): 
@@ -128,23 +129,28 @@ class Persona(models.Model):
     
 
 class Empleado(Persona):
-
     """
     Modelo que representa un Empleado de SKPY.
     """
-    cargo = models.CharField(max_length=100, blank=True, null=True, verbose_name="Cargo")
+    from configuraciones_maestras.models import Departamento, Cargo
+
+    departamento = models.ForeignKey(Departamento, on_delete=models.SET_NULL, null=True, blank=True, related_name='empleados', verbose_name="Departamento")
+    cargo = models.ForeignKey(Cargo, on_delete=models.SET_NULL, null=True, blank=True, related_name='empleados', verbose_name="Cargo")
+    fecha_contratacion = models.DateField(blank=True, null=True, verbose_name="Fecha de Contratación")
+    fecha_terminacion = models.DateField(blank=True, null=True, verbose_name="Fecha de Terminación")
     descripcion_trabajo = models.TextField(blank=True, null=True, verbose_name="Descripción del Trabajo")
-    departamento = models.CharField(max_length=100, blank=True, null=True, verbose_name="Departamento")
     tiene_usuario = models.BooleanField(default=False, verbose_name="Tiene Usuario")
     class Meta:
         verbose_name = "Empleado"
         verbose_name_plural = "Empleados"
         ordering = ['nombre']
 
+
     def __str__(self):
         nombre = self.nombre or ""
         apellidos = self.apellidos or ""
         return f"{nombre} {apellidos}".strip() or f"Empleado #{self.id}"
+
 
 class UsuarioPerfil(models.Model):
     """
@@ -167,3 +173,5 @@ class UsuarioPerfil(models.Model):
         verbose_name = "Usuario Perfil"
         verbose_name_plural = "Usuarios Perfil"
         ordering = ['user__username']
+
+

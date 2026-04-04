@@ -91,6 +91,12 @@
                     <span class="text-muted">-</span>
                   {% endif %}
                 </td>
+                <td>
+                  {% if perfil.user.is_active %}
+                    <a href="{% url 'desactivar_usuario' perfil.user.id %}" class="btn btn-warning btn-sm">Desactivar</a>
+                  {% else %}
+                    <a href="{% url 'activar_usuario' perfil.user.id %}" class="btn btn-success btn-sm">Activar</a>
+                  {% endif %}
               </tr>
             {% empty %}
               <tr>

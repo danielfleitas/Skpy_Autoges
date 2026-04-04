@@ -1,12 +1,100 @@
-# clientes_pedidos/crear_cliente.html
-{% extends "base.html" %}
+{% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
-  <h2>Crear Nuevo Cliente</h2>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Guardar Cliente</button>
-    </form>
-    <a href="{% url 'lista_clientes' %}">Cancelar</a>
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-7 col-md-9">
+      <div class="card shadow border-0">
+        <div class="card-header bg-primary text-white d-flex align-items-center">
+          <img src="{% static 'img/agregar.png' %}" alt="Agregar" width="32" height="32" class="me-2">
+          <h4 class="mb-0 fw-bold">Agregar Cliente</h4>
+        </div>
+        <div class="card-body">
+          <form method="POST" id="cliente-form" novalidate>
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="id_tipo_persona" class="form-label">Tipo de Persona</label>
+              {{ form.tipo_persona.as_widget }}
+            </div>
+            <div id="campos-fisica" style="display: none;">
+              <div class="mb-3">
+                <label for="id_nombre" class="form-label">Nombre</label>
+                {{ form.nombre }}
+              </div>
+              <div class="mb-3">
+                <label for="id_apellidos" class="form-label">Apellidos</label>
+                {{ form.apellidos.as_widget }}
+              </div>
+              <div class="mb-3">
+                <label for="id_documento_identidad" class="form-label">Documento de Identidad</label>
+                {{ form.documento_identidad.as_widget }}
+              </div>
+            </div>
+            <div id="campos-juridica" style="display: none;">
+              <div class="mb-3">
+                <label for="id_razon_social" class="form-label">Razón Social</label>
+                {{ form.razon_social.as_widget }}
+              </div>
+              <div class="mb-3">
+                <label for="id_ruc" class="form-label">RUC</label>
+                {{ form.ruc.as_widget }}
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="id_telefono" class="form-label">Teléfono</label>
+              {{ form.telefono.as_widget }}
+            </div>
+            <div class="mb-3">
+              <label for="id_email" class="form-label">Email</label>
+              {{ form.email.as_widget }}
+            </div>
+            <div class="mb-3">
+              <label for="id_direccion" class="form-label">Dirección</label>
+              {{ form.direccion.as_widget }}
+            </div>
+            <div class="mb-3">
+              <label for="id_estado" class="form-label">Estado</label>
+              {{ form.estado.as_widget }}
+            </div>
+            
+            <div class="d-flex justify-content-end gap-2">
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-person-plus-fill"></i> Agregar
+              </button>
+              <a href="{% url 'lista_clientes' %}" class="btn btn-secondary">
+                Cancelar
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  function mostrarCampos() {
+    var tipo = document.getElementById('id_tipo_persona').value;
+    var fisica = document.getElementById('campos-fisica');
+    var juridica = document.getElementById('campos-juridica');
+    if (tipo === 'FISICA') {
+      fisica.style.display = '';
+      juridica.style.display = 'none';
+    } else if (tipo === 'JURIDICA') {
+      fisica.style.display = 'none';
+      juridica.style.display = '';
+    } else {
+      fisica.style.display = 'none';
+      juridica.style.display = 'none';
+    }
+  }
+  var tipoPersona = document.getElementById('id_tipo_persona');
+  if (tipoPersona) {
+    tipoPersona.addEventListener('change', mostrarCampos);
+    mostrarCampos(); // Inicializa al cargar
+  }
+});
+</script>
 {% endblock %}

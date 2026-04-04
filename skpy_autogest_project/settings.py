@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     #'documentos_financieros',
     #'importaciones',
     #'reportes',
-    #'reposicion_stock',
+    'reposicion_stock',
 ]
 
 MIDDLEWARE = [

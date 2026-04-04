@@ -2,13 +2,15 @@
 from django.urls import path
 from . import views
 from django.contrib.auth.decorators import login_required
-app_name = 'clientes_pedidos'
+
 urlpatterns = [
-    # path('clientes/', views.lista_clientes, name='lista_clientes'),
-    # path('clientes/crear/', views.agregar_cliente, name='agregar_cliente'),
-    # path('clientes/<int:cliente_id>/', login_required(views.detalle_cliente), name='detalle_cliente'),
-    # path('clientes/<int:cliente_id>/editar/', login_required(views.editar_cliente), name='editar_cliente'),
-    
+    path('clientes/', views.lista_clientes, name='lista_clientes'),
+    path('clientes/crear/', views.agregar_cliente, name='agregar_cliente'),
+    path('clientes/<int:cliente_id>/', views.detalle_cliente, name='detalle_cliente'),
+    path('clientes/<int:cliente_id>/editar/', views.editar_cliente, name='editar_cliente'),
+    path('clientes/<int:cliente_id>/realizar_pedido/', views.realizar_pedido, name='realizar_pedido'),
+    path('clientes/<int:cliente_id>/realizar_pedido_importacion/', views.realizar_pedido_a_medida, name='realizar_pedido_a_medida'),
+
     # path('pedidos/', login_required(views.lista_pedidos), name='lista_pedidos'),
     # path('pedidos/<int:pedido_id>/', login_required(views.detalle_pedido), name='detalle_pedido'),
     # path('pedidos/<int:pedido_id>/editar/', login_required(views.editar_pedido), name='editar_pedido'),

@@ -11,8 +11,16 @@ def revisar_permiso(nombre_permiso):
     def decorator(view_func):
         def _wrapped_view(request, *args, **kwargs):
             usuario = request.user
+            # Si el usuario no está autenticado, redirigir a login
             if not usuario.is_authenticated:
                 return redirect('login')
+            # Si el usuario está inactivo, redirigir a home
+            if usuario.is_active == False:
+                return redirect('home' )
+            # Si el usuario es superusuario, permitir acceso
+            if usuario.is_superuser:
+                return view_func(request, *args, **kwargs)
+            
             # Verificar si el usuario tiene el permiso directamente
             if usuario.has_perm(nombre_permiso):
                 return view_func(request, *args, **kwargs)

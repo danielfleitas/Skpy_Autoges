@@ -1,0 +1,12 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Inactivar Empleado</h2>
+    <form method="post">
+        {% csrf_token %}
+        <p>¿Está seguro de que desea inactivar al empleado {{ empleado.nombre }}?</p>
+        <button type="submit">Inactivar</button>
+        <a href="{% url 'lista_empleados' %}">Cancelar</a>
+    </form>
+{% endblock %}

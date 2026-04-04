@@ -26,6 +26,8 @@ class SolicitudReposicion(models.Model):
     creador = models.ForeignKey(UsuarioPerfil, on_delete=models.SET_NULL, null=True, related_name='solicitudes_creadas')
     estado = models.CharField(max_length=20, choices=ESTADO_SOLICITUD, default='generada', verbose_name="Estado de la Solicitud")
     observaciones = models.TextField(blank=True, null=True, verbose_name="Observaciones")
+    fecha_finalizacion = models.DateTimeField(blank=True, null=True, verbose_name="Fecha de Finalización")
+    usuario_finalizacion = models.ForeignKey(UsuarioPerfil, on_delete=models.SET_NULL, null=True, blank=True, related_name='solicitudes_finalizadas')
 
     class Meta:
         verbose_name = "Solicitud de Reposición"
@@ -44,6 +46,11 @@ class ItemSolicitud(models.Model):
     Modelo que representa un ítem (vehículo o repuesto) dentro de una
     solicitud de reposición.
     """
+    TIPO_DE_ITEM = (
+        ('vehiculo', 'Vehículo'),
+        ('repuesto', 'Repuesto'),
+    )
+    item = models.CharField(max_length=20, choices=TIPO_DE_ITEM, verbose_name="Tipo de Ítem", default='repuesto')
     solicitud = models.ForeignKey(SolicitudReposicion, on_delete=models.CASCADE, related_name='items_solicitados')
     vehiculo = models.ForeignKey(Vehiculo, on_delete=models.SET_NULL, null=True, blank=True)
     repuesto = models.ForeignKey(Repuesto, on_delete=models.SET_NULL, null=True, blank=True)

@@ -85,3 +85,64 @@ class TasaCambio(models.Model):
 
     def __str__(self):
         return f"1 {self.moneda_origen} = {self.valor} {self.moneda_destino} (al {self.fecha_actualizacion})"
+    
+
+
+# Departamentos en la empresa
+
+class Departamento(models.Model):
+    '''
+    Modelo que representa un Departamento en la empresa.
+    '''
+
+    nombre = models.CharField(max_length=100, unique=True, verbose_name="Nombre del Departamento")
+    descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción del Departamento")
+    fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Creación")
+    estado = models.BooleanField(default=True, verbose_name="Estado")  # True para activo, False para inactivo
+
+    def activar(self):
+        self.estado = True
+        self.save()
+
+    def inactivar(self):
+        self.estado = False
+        self.save()
+
+    def __str__(self):
+        return self.nombre
+
+    class Meta:
+        verbose_name = "Departamento"
+        verbose_name_plural = "Departamentos"
+        ordering = ['nombre']
+
+
+# Cargos o puestos de trabajo en la empresa segun departamentos
+class Cargo(models.Model):
+    """ 
+    Modelo que representa un Cargo o Puesto de Trabajo en la empresa.
+    """
+    nombre = models.CharField(max_length=100, unique=True, verbose_name="Nombre del Cargo")
+    descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción del Cargo")
+    departamento = models.ForeignKey(Departamento, on_delete=models.CASCADE, related_name='cargos', verbose_name="Departamento")
+    fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Creación")
+    estado = models.BooleanField(default=True, verbose_name="Estado")  # True para activo, False para inactivo
+    vacantes = models.IntegerField(default=1, verbose_name="Número de Vacantes")
+    salario = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name="Salario")
+    
+    def __str__(self):
+        return f'{self.nombre} - {self.departamento.nombre}'
+
+    def abrir_vacante(self):
+        self.vacantes += 1
+        self.save()
+    
+    def cerrar_vacante(self):
+        if self.vacantes > 0:
+            self.vacantes -= 1
+            self.save()
+
+    class Meta:
+        verbose_name = "Cargo"
+        verbose_name_plural = "Cargos"
+        ordering = ['nombre']

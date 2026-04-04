@@ -86,12 +86,14 @@ class EmpleadoForm(forms.ModelForm):
 
     class Meta:
         model = Empleado
-        fields = ['nombre', 'apellidos', 'documento_identidad', 'ruc', 'telefono', 'email', 'direccion', 'cargo', 'descripcion_trabajo', 'departamento', 'estado']
+        fields = ['nombre', 'apellidos', 'documento_identidad', 'ruc', 'telefono', 'email', 'direccion', 'departamento', 'cargo', 'estado']
         widgets = {
             'nombre': forms.TextInput(attrs={'required': 'required'}),
             'apellidos': forms.TextInput(attrs={'required': 'required'}),
             'documento_identidad': forms.TextInput(attrs={'required': 'required'}),
             'email': forms.EmailInput(attrs={'required': 'required'}),
+            'departamento': forms.Select(attrs={'id': 'id_departamento'}),
+            'cargo': forms.Select(attrs={'id': 'id_cargo'}),
         }
 
     def clean(self):
@@ -117,12 +119,9 @@ class PerfilUsuarioForm(forms.ModelForm):
     """
     Formulario para editar el perfil del usuario, incluyendo la foto de perfil.
     """
-    documento_identidad = forms.CharField(label='Documento de Identidad', max_length=20, required=False)
-    username = forms.CharField(label='Nombre de Usuario', max_length=150, required=True)
-    email = forms.EmailField(label='Correo Electrónico', required=True)
     class Meta: 
         model = UsuarioPerfil
-        fields = ['empleado', 'roles', 'foto_perfil', 'username', 'email', 'documento_identidad']
+        fields = ['empleado', 'roles', 'foto_perfil']
         widgets = {
             'roles': forms.CheckboxSelectMultiple(),
         }

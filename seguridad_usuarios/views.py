@@ -5,13 +5,14 @@ from django.contrib.auth.decorators import login_required
 from .models import Rol, Permiso, Auditoria, Empleado, UsuarioPerfil
 from .forms import UserRegisterForm, PermisoForm, RolForm, PermisoForm, PasswordChangeForm, EmpleadoForm, PerfilUsuarioForm
 # User
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group, Permission, PermissionManager
 from .decorators import revisar_permiso
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 import logging
 #from .decorators import requiere_privilegio
+from django.http import JsonResponse
 
 # Importa el modelo User de Django para manejar la autenticación
 from django.contrib.auth.models import User
@@ -62,27 +63,6 @@ def crear_usuario(request):
         logger.error(f"Error al crear usuario: {e}")
         messages.error(request, "Ocurrió un error al crear el usuario.")
         return redirect('lista_usuarios')
-
-@login_required
-def cambiar_contrasena(request):
-    """
-    Vista para cambiar la contraseña del usuario.
-    """
-    if request.method == 'POST':
-        form = PasswordChangeForm(request.POST)
-        if form.is_valid():
-            # Lógica para cambiar la contraseña
-            print("Contraseña cambiada")
-            new_password = form.cleaned_data['new_password']
-            request.user.set_password(new_password)
-            request.user.save()
-            messages.success(request, 'Contraseña cambiada exitosamente.')
-            return redirect('login')
-    else:
-        print("get")
-        form = PasswordChangeForm()
-
-    return render(request, 'seguridad_usuarios/cambiar_contrasena.html', {'form': form})
 
 @login_required
 def editar_usuario(request, pk):
@@ -182,10 +162,10 @@ def cambiar_contrasena(request):
             request.user.set_password(new_password)
             request.user.save()
             # Si el usuario es empleado, marca que ya no debe cambiar la contraseña
-            empleado = getattr(request.user, 'empleado', None)
-            if empleado:
-                empleado.debe_cambiar_contrasena = False
-                empleado.save()
+            perfil_usuario = getattr(request.user, 'perfil', None)
+            if perfil_usuario:
+                perfil_usuario.debe_cambiar_contrasena = False
+                perfil_usuario.save()
             messages.success(request, 'Contraseña cambiada exitosamente.')
             return redirect('login')
     else:
@@ -232,12 +212,12 @@ def registro_view(request):
         print(e)
         messages.error(request, "Ocurrió un error al registrar el usuario.")
         return redirect('login')
-    
+
+
 # --------------------------------------------------------------------------
 # Otras vistas relacionadas con la seguridad y gestión de usuarios pueden añadirse aquí     
 # --------------------------------------------------------------------------
 
-#  ...otras vistas para restablecer contraseñas, gestionar perfiles, etc.
 @login_required
 def enviar_correo_confirmacion(usuario):
     """
@@ -262,39 +242,54 @@ def enviar_correo_confirmacion(usuario):
 @revisar_permiso('seguridad_usuarios.listar_empleados')
 def lista_empleados(request):
     """
-    Vista para listar todos los empleados con buscador y filtros.
+    Vista optimizada para listar empleados con filtros dinámicos.
     """
+    # 1. Empezamos con el QuerySet base
     empleados = Empleado.objects.all()
-    # Filtros por nombre, apellido, departamento, email, estado y tiene_usuario
-    nombre = request.GET.get('nombre')
-    apellido = request.GET.get('apellido')
-    departamento = request.GET.get('departamento')
-    email = request.GET.get('email')
-    estado = request.GET.get('estado')
-    tiene_usuario = request.GET.get('tiene_usuario')
 
+    # 2. Capturamos los parámetros de búsqueda
+    nombre = request.GET.get('nombre', '').strip()
+    apellido = request.GET.get('apellido', '').strip()
+    departamento = request.GET.get('departamento', '').strip()
+    email = request.GET.get('email', '').strip()
+    estado = request.GET.get('estado', '')
+    tiene_usuario = request.GET.get('usuario', '')
+
+    # 3. Aplicamos filtros de texto (solo si tienen contenido)
     if nombre:
         empleados = empleados.filter(nombre__icontains=nombre)
     if apellido:
         empleados = empleados.filter(apellidos__icontains=apellido)
+    # departamento es ahora una FK; filtramos por el nombre del departamento
     if departamento:
-        empleados = empleados.filter(departamento__icontains=departamento)
+        empleados = empleados.filter(departamento__nombre__icontains=departamento)
     if email:
         empleados = empleados.filter(email__icontains=email)
-    if estado in ['True', 'False']:
-        empleados = empleados.filter(estado=(estado == 'True'))
-    if tiene_usuario in ['True', 'False']:
-        empleados = empleados.filter(tiene_usuario=(tiene_usuario == 'True'))
 
-    return render(request, 'seguridad_usuarios/lista_empleados.html', {
+    # 4. Filtro por Estado
+    if estado == 'ACTIVO':
+        empleados = empleados.filter(estado=True)
+    elif estado == 'INACTIVO':
+        empleados = empleados.filter(estado=False)
+
+    # 5. Filtro por "Tiene Usuario"
+    if tiene_usuario == 'SI':
+        empleados = empleados.filter(tiene_usuario=True)
+    elif tiene_usuario == 'NO':
+        empleados = empleados.filter(tiene_usuario=False)
+
+    # 6. Retornamos el contexto
+    context = {
         'empleados': empleados,
-        'nombre': nombre or '',
-        'apellido': apellido or '',
-        'departamento': departamento or '',
-        'email': email or '',
-        'estado': estado or '',
-        'tiene_usuario': tiene_usuario or '',
-    })
+        'nombre': nombre,
+        'apellido': apellido,
+        'departamento': departamento,
+        'email': email,
+        'estado': estado,
+        'tiene_usuario': tiene_usuario,
+    } 
+    return render(request, 'seguridad_usuarios/lista_empleados.html', context)
+
 
 @revisar_permiso('seguridad_usuarios.agregar_empleado')
 def agregar_empleado(request):
@@ -338,7 +333,6 @@ def editar_empleado(request, pk):
         messages.error(request, "Ocurrió un error al editar el empleado.")
         return redirect('lista_empleados')
 
-
 @revisar_permiso('seguridad_usuarios.eliminar_empleado')
 def eliminar_empleado(request, empleado_id):
     """
@@ -370,6 +364,42 @@ def detalle_empleado(request, pk):
         messages.error(request, "Ocurrió un error al cargar los detalles del empleado.")
         return redirect('lista_empleados')
 
+@revisar_permiso('seguridad_usuarios.desactivar_empleado')
+def desactivar_empleado(request, empleado_id):
+    """
+    Vista para inactivar un empleado existente.
+    """
+    try:
+        empleado = get_object_or_404(Empleado, id=empleado_id)
+        if request.method == 'POST':
+            empleado.estado = False
+            empleado.save()
+            messages.success(request, 'Empleado inactivado correctamente.')
+            return redirect('lista_empleados')
+        return render(request, 'seguridad_usuarios/inactivar_empleado.html', {'empleado': empleado})
+    except Exception as e:
+        logger.error(f"Error al inactivar empleado: {e}")
+        messages.error(request, "Ocurrió un error al inactivar el empleado.")
+        return redirect('lista_empleados')
+
+@revisar_permiso('seguridad_usuarios.activar_empleado')
+def activar_empleado(request, empleado_id):
+    """
+    Vista para activar un empleado existente.
+    """
+    try:
+        empleado = get_object_or_404(Empleado, id=empleado_id)
+        if request.method == 'POST':
+            empleado.estado = True
+            empleado.save()
+            messages.success(request, 'Empleado activado correctamente.')
+            return redirect('lista_empleados')
+        return render(request, 'seguridad_usuarios/activar_empleado.html', {'empleado': empleado})
+    except Exception as e:
+        logger.error(f"Error al activar empleado: {e}")
+        messages.error(request, "Ocurrió un error al activar el empleado.")
+        return redirect('lista_empleados')
+    
 # --------------------------------------------------------------------------
 # Vista de Roles
 # --------------------------------------------------------------------------
@@ -418,16 +448,35 @@ def editar_rol(request, pk):
 @revisar_permiso('seguridad_usuarios.listar_rol')
 def lista_roles(request):
     """
-    Vista para listar todos los roles.
+    Vista optimizada para listar roles con filtros.
+    Se recomienda usar GET para búsquedas.
     """
+    # 1. Base del QuerySet
     roles = Rol.objects.all()
-    if request.method == 'POST':
-        # filtrar por nombre
-        nombre = request.POST.get('nombre')
-        if nombre:
-            roles = Rol.objects.filter(nombre__icontains=nombre)
-        
-    return render(request, 'seguridad_usuarios/lista_roles.html', {'roles': roles})
+    # roles = Rol.objects.all().order_by('nombre') ORDENA ALFABETICAMENTE, SI SE DESEA ORDENAR POR FECHA DE CREACION: .order_by('-created_at')
+
+    # 2. Captura de parámetros 
+    nombre = request.GET.get('nombre', '').strip()
+    estado = request.GET.get('estado', '').strip()
+
+    # 3. Aplicación de filtros secuenciales
+    if nombre:
+        roles = roles.filter(nombre__icontains=nombre)
+
+    if estado == 'ACTIVO':
+        roles = roles.filter(estado=True)
+    elif estado == 'INACTIVO':
+        roles = roles.filter(estado=False)
+
+    # 4. Contexto para mantener los valores en los inputs del HTML
+    context = {
+        'roles': roles,
+        'nombre': nombre,
+        'estado': estado
+    }
+              
+    return render(request, 'seguridad_usuarios/lista_roles.html', context)             
+
 
 # --------------------------------------------------------------------------
 # Vista de Permisos
@@ -551,38 +600,57 @@ def lista_perfiles(request):
     """
     Vista para listar todos los perfiles de usuario.
     """
+    # Empezamos con todos los perfiles
     perfiles = UsuarioPerfil.objects.all()
+
+    # Obtenemos los parámetros de búsqueda desde la URL
     username = request.GET.get('username', '').strip()
     documento_identidad = request.GET.get('documento_identidad', '').strip()
     estado = request.GET.get('estado', '')
 
-    if request.method == 'GET':
+    if request.method == 'GET': 
 
+        # 1. Filtro por Username
         if username:
-            if request.GET['estado'] == 'ACTIVO':
+            perfiles = perfiles.filter(user__username__icontains=username)
 
-                perfiles = perfiles.filter(user__is_active=True, user__username__icontains=username)
-            else:
-                if request.GET['estado'] == 'INACTIVO':
-                    perfiles = perfiles.filter(user__is_active=False, user__username__icontains=username)
-                else:
-                    perfiles = perfiles.filter(user__username__icontains=username)
-        documento_identidad = request.GET.get('documento_identidad')
+        # 2. Filtro por Documento
         if documento_identidad:
-            
-            if request.GET['estado'] == 'ACTIVO':
+            perfiles = perfiles.filter(empleado__documento_identidad__icontains=documento_identidad)
 
-                perfiles = perfiles.filter(user__is_active=True, empleado__documento_identidad__icontains=documento_identidad)
-            else:
-                if request.GET['estado'] == 'INACTIVO':
-                    perfiles = perfiles.filter(user__is_active=False, empleado__documento_identidad__icontains=documento_identidad)
-                else:
-                    perfiles = perfiles.filter(empleado__documento_identidad__icontains=documento_identidad)
-        if estado == 'True':
+        # 3. Filtro por Estado (Combinando tus validaciones de 'ACTIVO'/'True')
+        if estado in ['ACTIVO', 'True']:
             perfiles = perfiles.filter(user__is_active=True)
-        elif estado == 'False':
+        elif estado in ['INACTIVO', 'False']:
             perfiles = perfiles.filter(user__is_active=False)
+
     return render(request, 'seguridad_usuarios/lista_perfiles.html', {'perfiles': perfiles})
+
+@revisar_permiso('seguridad_usuarios.activar_usuario')
+def activar_usuario(request, pk):
+    """
+    Vista para activar un usuario.
+    """
+    user = get_object_or_404(User, id=pk)
+    if request.method == 'POST':
+        user.is_active = True
+        user.save()
+        messages.success(request, f'Usuario "{user.username}" activado correctamente.')
+        return redirect('lista_perfiles')
+    return render(request, 'seguridad_usuarios/activar_usuario.html', {'user': user})
+
+@revisar_permiso('seguridad_usuarios.desactivar_usuario')
+def desactivar_usuario(request, pk):
+    """
+    Vista para desactivar un usuario.
+    """
+    user = get_object_or_404(User, id=pk)
+    if request.method == 'POST':
+        user.is_active = False
+        user.save()
+        messages.success(request, f'Usuario "{user.username}" desactivado correctamente.')
+        return redirect('lista_perfiles')
+    return render(request, 'seguridad_usuarios/desactivar_usuario.html', {'user': user})
 
 @revisar_permiso('seguridad_usuarios.crear_usuario_para_empleado')
 def crear_usuario_para_empleado(request, empleado_id):
@@ -628,12 +696,117 @@ def crear_usuario_para_empleado(request, empleado_id):
         messages.error(request, "Ocurrió un error al crear el usuario para el empleado.")
         return redirect('lista_empleados')
 
+@revisar_permiso('seguridad_usuarios.crear_grupo')    
+def crear_grupo(request):
+    """
+    Vista para crear un grupo de usuarios.
+    """
+    # Lógica para crear un grupo de usuarios User
+    groups = Group.objects.all()
+    permisos = Permission.objects.all()
+    if request.method == 'POST':
+        nombre_grupo = request.POST.get('nombre_grupo')
+        permisos_seleccionados = request.POST.getlist('permisos')
+        if nombre_grupo:
+            grupo, creado = Group.objects.get_or_create(name=nombre_grupo)
+            if creado:
+                if permisos_seleccionados:
+                    permisos_objetos = Permission.objects.filter(id__in=permisos_seleccionados)
+                    grupo.permissions.set(permisos_objetos)
+                messages.success(request, f'Grupo "{nombre_grupo}" creado correctamente.')
+                return redirect('crear_grupo')
+            else:
+                messages.warning(request, f'El grupo "{nombre_grupo}" ya existe.')
+        else:
+            messages.error(request, 'El nombre del grupo no puede estar vacío.')
+    return render(request, 'seguridad_usuarios/crear_grupo.html')
 
-def cargar_permisos(request):
+
+@revisar_permiso('seguridad_usuarios.asignar_usuario_a_grupo')
+def asignar_usuario_a_grupo(request, user_id):
     """
-    Vista para cargar permisos iniciales en la base de datos, con nombre y descripción.
+    Vista para asignar un usuario a un grupo.
     """
-    permisos_iniciales = [
+    user = get_object_or_404(User, id=user_id)
+    grupos = Group.objects.all()
+    if request.method == 'POST':
+        grupo_id = request.POST.get('grupo')
+        if grupo_id:
+            grupo = get_object_or_404(Group, id=grupo_id)
+            user.groups.add(grupo)
+            messages.success(request, f'Usuario "{user.username}" asignado al grupo "{grupo.name}".')
+            return redirect('lista_usuarios')
+        else:
+            messages.error(request, 'Debe seleccionar un grupo.')
+    return render(request, 'seguridad_usuarios/asignar_usuario_a_grupo.html', {'user': user, 'grupos': grupos})
+
+
+@revisar_permiso('seguridad_usuarios.remover_usuario_de_grupo')
+def remover_usuario_de_grupo(request, user_id, group_id):
+    """
+    Vista para remover un usuario de un grupo.
+    """
+    user = get_object_or_404(User, id=user_id)
+    grupo = get_object_or_404(Group, id=group_id)
+    if request.method == 'POST':
+        user.groups.remove(grupo)
+        messages.success(request, f'Usuario "{user.username}" removido del grupo "{grupo.name}".')
+        return redirect('lista_usuarios')
+    return render(request, 'seguridad_usuarios/remover_usuario_de_grupo.html', {'user': user, 'grupo': grupo})
+
+@revisar_permiso('seguridad_usuarios.asignar_permisos_a_grupo')
+def asignar_permisos_a_grupo(request, group_id):
+    """
+    Vista para asignar permisos a un grupo.
+    """
+    grupo = get_object_or_404(Group, id=group_id)
+    permisos = Permission.objects.all()
+    if request.method == 'POST':
+        permisos_seleccionados = request.POST.getlist('permisos')
+        if permisos_seleccionados:
+            permisos_objetos = Permission.objects.filter(id__in=permisos_seleccionados)
+            grupo.permissions.set(permisos_objetos)
+            messages.success(request, f'Permisos actualizados para el grupo "{grupo.name}".')
+            return redirect('crear_grupo')
+        else:
+            messages.error(request, 'Debe seleccionar al menos un permiso.')
+    return render(request, 'seguridad_usuarios/asignar_permisos_a_grupo.html', {'grupo': grupo, 'permisos': permisos})
+
+@revisar_permiso('seguridad_usuarios.editar_grupo')
+def editar_grupo(request, group_id):
+    """
+    Vista para editar un grupo de usuarios.
+    """
+    grupo = get_object_or_404(Group, id=group_id)
+    if request.method == 'POST':
+        nuevo_nombre = request.POST.get('nombre_grupo')
+        if nuevo_nombre:
+            grupo.name = nuevo_nombre
+            grupo.save()
+            messages.success(request, f'Grupo renombrado a "{nuevo_nombre}".')
+            return redirect('crear_grupo')
+        else:
+            messages.error(request, 'El nombre del grupo no puede estar vacío.')
+    return render(request, 'seguridad_usuarios/editar_grupo.html', {'grupo': grupo})
+
+@revisar_permiso('seguridad_usuarios.listar_grupos')
+def lista_grupos(request):
+    """
+    Vista para listar todos los grupos de usuarios.
+    """
+    grupos = Group.objects.all()
+    return render(request, 'seguridad_usuarios/lista_grupos.html', {'grupos': grupos})
+
+
+
+
+def obtener_cargos(request):
+    from configuraciones_maestras.models import Cargo
+    departamento_id = request.GET.get('departamento_id')
+    cargos = Cargo.objects.filter(departamento_id=departamento_id).values('id', 'nombre')
+    return JsonResponse(list(cargos), safe=False)
+
+permisos_iniciales_seguridad_usuarios = [
         {
             'codename': 'seguridad_usuarios.registrar_usuario',
             'nombre': 'Registrar usuario',
@@ -740,12 +913,3 @@ def cargar_permisos(request):
             'descripcion': 'Permite crear un usuario y perfil para un empleado.'
         },
     ]
-    for permiso in permisos_iniciales:
-        Permiso.objects.get_or_create(
-            codename=permiso['codename'],
-            defaults={
-                'nombre': permiso['nombre'],
-                'descripcion': permiso['descripcion']
-            }
-        )
-    return redirect('home')

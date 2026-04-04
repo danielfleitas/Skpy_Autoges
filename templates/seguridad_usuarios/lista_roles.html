@@ -10,7 +10,16 @@
       <div class="filters mb-4">
         <form method="post" class="d-flex flex-wrap justify-content-center gap-2">
           {% csrf_token %}
-          <input type="text" name="nombre" placeholder="Buscar por nombre" value="{{ request.POST.nombre }}" class="form-control" style="max-width: 200px;">
+          <div class="col-md-3">
+              <input type="text" name="nombre" placeholder="Nombre" value="{{ request.GET.nombre }}" class="form-control">
+          </div>
+          <div class="col-md-2">
+              <select name="estado" class="form-select">
+                <option value="">Estado</option>
+                <option value="ACTIVO" {% if request.GET.estado == 'ACTIVO' %}selected{% endif %}>Activos</option>
+                <option value="INACTIVO" {% if request.GET.estado == 'INACTIVO' %}selected{% endif %}>Inactivos</option>
+              </select>
+          </div>
           <button type="submit" class="btn btn-success">Buscar</button>
           <a href="{% url 'lista_roles' %}" class="btn btn-secondary">Limpiar</a>
         </form>
